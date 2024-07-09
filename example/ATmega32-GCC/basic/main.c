@@ -56,7 +56,7 @@ int main(void)
   HT1382_Platform_Init(&Handler);
   HT1382_Init(&Handler);
   HT1382_SetDateTime(&Handler, &DateTime);
-  HT1382_SetOutWave(&Handler, HT1382_OutWave_1Hz);
+  HT1382_SetOutWave(&Handler, HT1382_OUTWAVE_1HZ);
 
   while (1)
   {
