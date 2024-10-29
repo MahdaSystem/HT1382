@@ -69,6 +69,12 @@
  */
 #define HT1382_SECONDS_CH               7
 
+/**
+ * @brief  Register bits of Hours register
+ */
+#define HT1382_HOURS_AM_PM              5
+#define HT1382_HOURS_12_24              7
+
 
 /**
  * @brief  Register bits of ST1 register
@@ -299,7 +305,7 @@ HT1382_SetDateTime(HT1382_Handler_t *Handler, HT1382_DateTime_t *DateTime)
   // convert value of parameter to BCD
   Buffer[HT1382_REG_ADDR_SECONDS] = HT1382_DECtoBCD(DateTime->Second) & ~(1 << HT1382_SECONDS_CH);
   Buffer[HT1382_REG_ADDR_MINUTES] = HT1382_DECtoBCD(DateTime->Minute);
-  Buffer[HT1382_REG_ADDR_HOURS]   = HT1382_DECtoBCD(DateTime->Hour);
+  Buffer[HT1382_REG_ADDR_HOURS]   = HT1382_DECtoBCD(DateTime->Hour) | (1 << HT1382_HOURS_12_24);
   Buffer[HT1382_REG_ADDR_DAY]     = HT1382_DECtoBCD(DateTime->WeekDay);
   Buffer[HT1382_REG_ADDR_DATE]    = HT1382_DECtoBCD(DateTime->Day);
   Buffer[HT1382_REG_ADDR_MONTH]   = HT1382_DECtoBCD(DateTime->Month);
@@ -337,7 +343,15 @@ HT1382_GetDateTime(HT1382_Handler_t *Handler, HT1382_DateTime_t *DateTime)
   // convert BCD value to decimal
   DateTime->Second  = HT1382_BCDtoDEC(Buffer[HT1382_REG_ADDR_SECONDS] & ~(1 << HT1382_SECONDS_CH));
   DateTime->Minute  = HT1382_BCDtoDEC(Buffer[HT1382_REG_ADDR_MINUTES]);
-  DateTime->Hour    = HT1382_BCDtoDEC(Buffer[HT1382_REG_ADDR_HOURS]);
+  if ((Buffer[HT1382_REG_ADDR_HOURS] >> HT1382_HOURS_12_24) & 0x01) // 24 hours mode
+  {
+    DateTime->Hour  = HT1382_BCDtoDEC(Buffer[HT1382_REG_ADDR_HOURS] & 0x3F);
+  }
+  else
+  {
+    DateTime->Hour = HT1382_BCDtoDEC(Buffer[HT1382_REG_ADDR_HOURS] & 0x1F);
+    DateTime->Hour += ((Buffer[HT1382_REG_ADDR_HOURS] >> HT1382_HOURS_AM_PM) & 0x01) ? 12 : 0;
+  }
   DateTime->WeekDay = HT1382_BCDtoDEC(Buffer[HT1382_REG_ADDR_DAY]);
   DateTime->Day     = HT1382_BCDtoDEC(Buffer[HT1382_REG_ADDR_DATE]);
   DateTime->Month   = HT1382_BCDtoDEC(Buffer[HT1382_REG_ADDR_MONTH]);
